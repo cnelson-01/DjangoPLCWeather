@@ -36,6 +36,8 @@ def logSystemStatus(request):
         ss.loadVoltage = request.POST["loadVoltage"]
         ss.loadCurrent = request.POST["loadCurrent"]
 
+        ss.caseTemp = request.POST["caseTemp"]
+
         ss.collectionTime = timezone.now()
 
         ss.save()

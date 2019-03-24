@@ -15,4 +15,6 @@ class SystemStats(models.Model):
     loadVoltage = models.FloatField()
     loadCurrent = models.FloatField()
 
+    caseTemp = models.FloatField()
+
     collectionTime = models.DateTimeField("date/time collected")
