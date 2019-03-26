@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    * {
+        font-family: monospace;
+
+    div.col-1 {
+        width: 200px
+    }
+
+    div.col-2 {
+        width: 500px
+    }
+
+    }
+</style>
+<head>
+    <meta charset="UTF-8">
+    <title>System Status</title>
+</head>
+<body>
+<pre>
+Current stats:
+    Collection time: {{ lastCollectionTime }}
+    Weather temperature: {{ weatherTemp }}
+
+    Panel power: {{ currentPannelPower }}
+    Battery voltage: {{ currentBatteryVoltage }}
+    Case temperature: {{ caseTemp }}
+
+Battery voltage:
+    {{ batteryPowerGraph }}
+
+Panel power:
+    {{ panelPowerGraph }}
+</pre>
+</body>
+</html>
