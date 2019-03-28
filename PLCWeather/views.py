@@ -10,6 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from PLCWeather.models import *
 
+hoursToGraph = 48
+
 graphTemplate = '''
 {ymax}|{row9}
       |{row8}
@@ -21,32 +23,40 @@ graphTemplate = '''
       |{row2}
       |{row1}
 {ymin}|{row0}
-      |________________________
-      |{xmin}            {xmax}'''
+      |{xunderscores}
+      |{xmin}{xspacing}{xmax}'''
 
 
-def fillData(arrayOf24Floats, maxTime, minTime):
-    maxy = max(arrayOf24Floats)
-    miny = min(arrayOf24Floats)
+def fillData(arrayOfFloats, maxTime, minTime):
+    maxy = max([a for a in arrayOfFloats if isinstance(a, float)])
+    miny = min([a for a in arrayOfFloats if isinstance(a, float)])
 
-    mint = minTime.strftime("%H:%M")
-    maxt = maxTime.strftime("%H:%M")
+    # mint = minTime.strftime("%H:%M")
+    # maxt = maxTime.strftime("%H:%M")
+    mint = str(hoursToGraph) + 'hrs'
+    maxt = '  Now'
 
     rows = []
     for a in range(10):
-        rows.append([' ' for b in range(24)])
+        rows.append([' ' for b in range(hoursToGraph)])
 
     scaled = []
     if isinstance(maxy, float):
         if isinstance(miny, float):
             # scale y to 0-10
-            for f in arrayOf24Floats:
-                if maxy - miny:
-                    scaled.append(round(((f - miny) / (maxy - miny)) * 10))
+            for f in arrayOfFloats:
+                if isinstance(f, float):
+                    if maxy - miny:
+                        scaled.append(round(((f - miny) / (maxy - miny)) * 10))
+                    else:
+                        scaled.append(0)
                 else:
-                    scaled.append(0)
-
-
+                    scaled.append('')
+            for index, value in enumerate(scaled):
+                if value:
+                    rows[value - 1][index] = '.'
+                elif value != '':
+                    rows[value][index] = '.'
             return graphTemplate.format(ymax="{:6.2f}".format(maxy), ymin="{:6.2f}".format(miny), xmin=mint, xmax=maxt,
                                         row0=''.join(rows[0]),
                                         row1=''.join(rows[1]),
@@ -58,6 +68,8 @@ def fillData(arrayOf24Floats, maxTime, minTime):
                                         row7=''.join(rows[7]),
                                         row8=''.join(rows[8]),
                                         row9=''.join(rows[9]),
+                                        xunderscores=''.join('_' for a in range(hoursToGraph)),
+                                        xspacing=''.join(' ' for a in range(hoursToGraph - (5 * 2))),
                                         )
     # something went wrong send empty chart
     return graphTemplate.format(ymax="unk   ", ymin="unk   ", xmin=mint, xmax=maxt,
@@ -71,6 +83,8 @@ def fillData(arrayOf24Floats, maxTime, minTime):
                                 row7=''.join(rows[7]),
                                 row8=''.join(rows[8]),
                                 row9=''.join(rows[9]),
+                                xunderscores=''.join('_' for a in range(hoursToGraph)),
+                                xspacing=''.join(' ' for a in range(hoursToGraph - (5 * 2))),
                                 )
 
 
@@ -89,12 +103,12 @@ def status(request):
     pannelPowerGrid = []
     batteryVoltageGrid = []
 
-    for a in range(24):
+    for a in reversed(range(hoursToGraph)):
         powertmp = SystemStats.objects.order_by('-collectionTime').filter(collectionTime__range=(
-            timezone.now() - timezone.timedelta(hours=a), timezone.now() - timezone.timedelta(hours=a + 1)))
+            timezone.now() - timezone.timedelta(hours=a + 1), timezone.now() - timezone.timedelta(hours=a)))
         if len(powertmp):
-            powerSum = round(sum([a.panelVoltage * a.panelPower for a in powertmp]) / len(powertmp))
-            batteryVoltageGrid.append(round(sum([a.batteryVoltage for a in powertmp]) / len(powertmp)))
+            powerSum = sum([a.panelVoltage * a.panelCurrent for a in powertmp]) / len(powertmp)
+            batteryVoltageGrid.append(sum([a.batteryVoltage for a in powertmp]) / len(powertmp))
             pannelPowerGrid.append(powerSum)
         else:
             pannelPowerGrid.append('')
@@ -111,7 +125,8 @@ def status(request):
         "panelPowerGraph": fillData(pannelPowerGrid, timezone.now() - timezone.timedelta(hours=24),
                                     timezone.now()),
         "batteryPowerGraph": fillData(batteryVoltageGrid, timezone.now() - timezone.timedelta(hours=24),
-                                      timezone.now())
+                                      timezone.now()),
+        "textWidth": str(100 / (2 * (hoursToGraph + 7)))
     }
 
     template = loader.get_template('status.html')
