@@ -28,8 +28,7 @@ graphTemplate = '''
 
 
 def fillData(arrayOfFloats, maxTime, minTime):
-    maxy = max([a for a in arrayOfFloats if isinstance(a, float)])
-    miny = min([a for a in arrayOfFloats if isinstance(a, float)])
+    stripedNonInts = [a for a in arrayOfFloats if isinstance(a, float)]
 
     # mint = minTime.strftime("%H:%M")
     # maxt = maxTime.strftime("%H:%M")
@@ -40,37 +39,42 @@ def fillData(arrayOfFloats, maxTime, minTime):
     for a in range(10):
         rows.append([' ' for b in range(hoursToGraph)])
 
-    scaled = []
-    if isinstance(maxy, float):
-        if isinstance(miny, float):
-            # scale y to 0-10
-            for f in arrayOfFloats:
-                if isinstance(f, float):
-                    if maxy - miny:
-                        scaled.append(round(((f - miny) / (maxy - miny)) * 10))
+    if len(stripedNonInts):
+        maxy = max(stripedNonInts)
+        miny = min(stripedNonInts)
+
+        scaled = []
+        if isinstance(maxy, float):
+            if isinstance(miny, float):
+                # scale y to 0-10
+                for f in arrayOfFloats:
+                    if isinstance(f, float):
+                        if maxy - miny:
+                            scaled.append(round(((f - miny) / (maxy - miny)) * 10))
+                        else:
+                            scaled.append(0)
                     else:
-                        scaled.append(0)
-                else:
-                    scaled.append('')
-            for index, value in enumerate(scaled):
-                if value:
-                    rows[value - 1][index] = '.'
-                elif value != '':
-                    rows[value][index] = '.'
-            return graphTemplate.format(ymax="{:6.2f}".format(maxy), ymin="{:6.2f}".format(miny), xmin=mint, xmax=maxt,
-                                        row0=''.join(rows[0]),
-                                        row1=''.join(rows[1]),
-                                        row2=''.join(rows[2]),
-                                        row3=''.join(rows[3]),
-                                        row4=''.join(rows[4]),
-                                        row5=''.join(rows[5]),
-                                        row6=''.join(rows[6]),
-                                        row7=''.join(rows[7]),
-                                        row8=''.join(rows[8]),
-                                        row9=''.join(rows[9]),
-                                        xunderscores=''.join('_' for a in range(hoursToGraph)),
-                                        xspacing=''.join(' ' for a in range(hoursToGraph - (5 * 2))),
-                                        )
+                        scaled.append('')
+                for index, value in enumerate(scaled):
+                    if value:
+                        rows[value - 1][index] = '.'
+                    elif value != '':
+                        rows[value][index] = '.'
+                return graphTemplate.format(ymax="{:6.2f}".format(maxy), ymin="{:6.2f}".format(miny), xmin=mint,
+                                            xmax=maxt,
+                                            row0=''.join(rows[0]),
+                                            row1=''.join(rows[1]),
+                                            row2=''.join(rows[2]),
+                                            row3=''.join(rows[3]),
+                                            row4=''.join(rows[4]),
+                                            row5=''.join(rows[5]),
+                                            row6=''.join(rows[6]),
+                                            row7=''.join(rows[7]),
+                                            row8=''.join(rows[8]),
+                                            row9=''.join(rows[9]),
+                                            xunderscores=''.join('_' for a in range(hoursToGraph)),
+                                            xspacing=''.join(' ' for a in range(hoursToGraph - (5 * 2))),
+                                            )
     # something went wrong send empty chart
     return graphTemplate.format(ymax="unk   ", ymin="unk   ", xmin=mint, xmax=maxt,
                                 row0=''.join(rows[0]),
@@ -90,8 +94,9 @@ def fillData(arrayOfFloats, maxTime, minTime):
 
 def status(request):
     # latest = timezone.now() - timezone.timedelta(minutes=1)
-    latest_stats = list(SystemStats.objects.order_by('-collectionTime'))[0]
-    latest_temps = list(TemperatureSensor.objects.order_by('-collectionTime'))[0]
+    # latest_stats = list(SystemStats.objects.order_by('-id'))[0]
+    latest_stats = SystemStats.objects.last()
+    latest_temps = TemperatureSensor.objects.last()
 
     currentPanelPower = "%.2f" % (latest_stats.panelCurrent * latest_stats.panelVoltage)
     currentBatteryVoltage = "%.2f" % latest_stats.batteryVoltage
