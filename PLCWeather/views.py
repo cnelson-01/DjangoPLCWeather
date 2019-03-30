@@ -93,8 +93,9 @@ def status(request):
     latest_stats = list(SystemStats.objects.order_by('-collectionTime'))[0]
     latest_temps = list(TemperatureSensor.objects.order_by('-collectionTime'))[0]
 
-    currentPannelPower = "%.2f" % (latest_stats.panelCurrent * latest_stats.panelVoltage)
+    currentPanelPower = "%.2f" % (latest_stats.panelCurrent * latest_stats.panelVoltage)
     currentBatteryVoltage = "%.2f" % latest_stats.batteryVoltage
+    panelVoltage = "%.2f" % latest_stats.panelVoltage
 
     caseTemp = "%.2f" % latest_stats.caseTemp
     lastCollectionTime = str(latest_stats.collectionTime)
@@ -115,7 +116,8 @@ def status(request):
             batteryVoltageGrid.append('')
 
     context = {
-        'currentPannelPower': currentPannelPower,
+        "panelVoltage": panelVoltage,
+        'currentPanelPower': currentPanelPower,
         "currentBatteryVoltage": currentBatteryVoltage,
 
         "caseTemp": caseTemp,
