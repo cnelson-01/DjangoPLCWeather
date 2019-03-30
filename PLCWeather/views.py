@@ -108,9 +108,11 @@ def status(request):
 
     pannelPowerGrid = []
     batteryVoltageGrid = []
-
+    tempGrid = []
     for a in reversed(range(hoursToGraph)):
         powertmp = SystemStats.objects.order_by('-collectionTime').filter(collectionTime__range=(
+            timezone.now() - timezone.timedelta(hours=a + 1), timezone.now() - timezone.timedelta(hours=a)))
+        temp = TemperatureSensor.objects.order_by('-collectionTime').filter(collectionTime__range=(
             timezone.now() - timezone.timedelta(hours=a + 1), timezone.now() - timezone.timedelta(hours=a)))
         if len(powertmp):
             powerSum = sum([a.panelVoltage * a.panelCurrent for a in powertmp]) / len(powertmp)
@@ -119,6 +121,11 @@ def status(request):
         else:
             pannelPowerGrid.append('')
             batteryVoltageGrid.append('')
+
+        if len(temp):
+            tempGrid.append(sum([a.tempInF for a in temp]) / len(temp))
+        else:
+            tempGrid.append("")
 
     context = {
         "panelVoltage": panelVoltage,
@@ -133,6 +140,8 @@ def status(request):
                                     timezone.now()),
         "batteryPowerGraph": fillData(batteryVoltageGrid, timezone.now() - timezone.timedelta(hours=24),
                                       timezone.now()),
+        "tempGraph": fillData(tempGrid, timezone.now() - timezone.timedelta(hours=24),
+                              timezone.now()),
         "textWidth": str(100 / (2 * (hoursToGraph + 7)))
     }
 
