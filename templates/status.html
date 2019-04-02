@@ -16,11 +16,15 @@
 
     }
 </style>
+
+{% load tz %}
+
 <head>
     <meta charset="UTF-8">
     <title>System Status</title>
 </head>
 <body>
+{% localtime on %}
 <pre>
 Current stats:
     Collection time: {{ lastCollectionTime }}
@@ -39,6 +43,8 @@ Panel power:
 
 Temperature(f):
     {{ tempGraph }}
+
+{% endlocaltime %}
 </pre>
 </body>
 </html>
