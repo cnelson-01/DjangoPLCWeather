@@ -103,7 +103,7 @@ def status(request):
     panelVoltage = "%.2f" % latest_stats.panelVoltage
 
     caseTemp = "%.2f" % latest_stats.caseTemp
-    lastCollectionTime = str(latest_stats.collectionTime)
+    lastCollectionTime = latest_stats.collectionTime
     weatherTemp = "%.2f" % latest_temps.tempInF
 
     pannelPowerGrid = []
