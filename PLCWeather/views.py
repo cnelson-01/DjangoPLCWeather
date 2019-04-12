@@ -142,7 +142,7 @@ def status(request):
                                       timezone.now()),
         "tempGraph": fillData(tempGrid, timezone.now() - timezone.timedelta(hours=24),
                               timezone.now()),
-        "textWidth": str(100 / (2 * (hoursToGraph + 7)))
+        "textWidth": str(85 / (2 * (hoursToGraph + 7)))
     }
 
     template = loader.get_template('status.html')

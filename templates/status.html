@@ -22,6 +22,13 @@
 <head>
     <meta charset="UTF-8">
     <title>System Status</title>
+
+    <script>
+        var intervalID = setInterval(function () {
+            window.location.reload(true);
+        }, 10 * 60 * 1000 - 5);
+    </script>
+
 </head>
 <body>
 {% localtime on %}
