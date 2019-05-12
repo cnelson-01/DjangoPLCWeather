@@ -199,6 +199,8 @@ def logSystemStatus(request):
 
         ss.collectionTime = timezone.now()
 
+        ss.isAverageValue = False
+
         ss.save()
 
         doAverage()
