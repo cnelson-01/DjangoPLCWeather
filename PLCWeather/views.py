@@ -94,7 +94,6 @@ def fillData(arrayOfFloats, maxTime, minTime):
 
 
 def status(request):
-    doAverage()
     # latest = timezone.now() - timezone.timedelta(minutes=1)
     # latest_stats = list(SystemStats.objects.order_by('-id'))[0]
     latest_stats = SystemStats.objects.last()
@@ -170,6 +169,7 @@ def logTempData(request):
 def doAverage():
     sstats = SystemStats.objects.all().filter(isAverageValue=False)
     if len(sstats) > 60 * 60:
+        print("aggregating...")
         ss = SystemStats()
         for f in SystemStats._meta.get_fields():
             if not isinstance(f, AutoField):
