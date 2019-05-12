@@ -18,3 +18,5 @@ class SystemStats(models.Model):
     caseTemp = models.FloatField()
 
     collectionTime = models.DateTimeField("date/time collected")
+
+    isAverageValue = models.BooleanField()

@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from PLCWeather.models import *
+from django.db.models import Avg, AutoField, DateTimeField, BooleanField
 
 hoursToGraph = 48
 
@@ -93,6 +94,7 @@ def fillData(arrayOfFloats, maxTime, minTime):
 
 
 def status(request):
+    doAverage()
     # latest = timezone.now() - timezone.timedelta(minutes=1)
     # latest_stats = list(SystemStats.objects.order_by('-id'))[0]
     latest_stats = SystemStats.objects.last()
@@ -101,6 +103,8 @@ def status(request):
     currentPanelPower = "%.2f" % (latest_stats.panelCurrent * latest_stats.panelVoltage)
     currentBatteryVoltage = "%.2f" % latest_stats.batteryVoltage
     panelVoltage = "%.2f" % latest_stats.panelVoltage
+
+    currentLoad = "%.2f" % latest_stats.loadCurrent
 
     caseTemp = "%.2f" % latest_stats.caseTemp
     lastCollectionTime = latest_stats.collectionTime
@@ -131,6 +135,7 @@ def status(request):
         "panelVoltage": panelVoltage,
         'currentPanelPower': currentPanelPower,
         "currentBatteryVoltage": currentBatteryVoltage,
+        "currentLoad": currentLoad,
 
         "caseTemp": caseTemp,
         "weatherTemp": weatherTemp,
@@ -162,6 +167,22 @@ def logTempData(request):
     return HttpResponse("done")
 
 
+def doAverage():
+    sstats = SystemStats.objects.all().filter(isAverageValue=False)
+    if len(sstats) > 60 * 60:
+        ss = SystemStats()
+        for f in SystemStats._meta.get_fields():
+            if not isinstance(f, AutoField):
+                if not isinstance(f, DateTimeField):
+                    if not isinstance(f, BooleanField):
+                        ss.__setattr__(f.attname, sstats.aggregate(Avg(f.attname))[f.attname + '__avg'])
+        ss.collectionTime = sstats[0].collectionTime
+        ss.isAverageValue = True
+        ss.save()
+    for s in sstats:
+        s.delete()
+
+
 @csrf_exempt
 def logSystemStatus(request):
     ss = SystemStats()
@@ -179,6 +200,8 @@ def logSystemStatus(request):
         ss.collectionTime = timezone.now()
 
         ss.save()
+
+        doAverage()
     except Exception as e:
         print("error bad post system status " + str(e))
     return HttpResponse("done")
