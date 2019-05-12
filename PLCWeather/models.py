@@ -5,6 +5,8 @@ class TemperatureSensor(models.Model):
     tempInF = models.FloatField()
     collectionTime = models.DateTimeField('date/time collected')
 
+    isAverageValue = models.BooleanField()
+
 
 class SystemStats(models.Model):
     panelVoltage = models.FloatField()

@@ -154,20 +154,8 @@ def status(request):
     return HttpResponse(template.render(context, request))
 
 
-@csrf_exempt
-def logTempData(request):
-    tempSensor = TemperatureSensor()
-    try:
-        tempSensor.tempInF = request.POST["tempInF"]
-        tempSensor.collectionTime = timezone.now()
-        tempSensor.save()
-    except Exception as e:
-        print("error bad post temp sensor" + str(e))
-    return HttpResponse("done")
-
-
-def doAverage():
-    sstats = SystemStats.objects.all().filter(isAverageValue=False)
+def doAverage(modelToAg):
+    sstats = modelToAg.objects.all().filter(isAverageValue=False)
     if len(sstats) > 60 * 60:
         print("aggregating...")
         ss = SystemStats()
@@ -179,8 +167,22 @@ def doAverage():
         ss.collectionTime = sstats[0].collectionTime
         ss.isAverageValue = True
         ss.save()
-    for s in sstats:
-        s.delete()
+        for s in sstats:
+            s.delete()
+
+
+@csrf_exempt
+def logTempData(request):
+    tempSensor = TemperatureSensor()
+    try:
+        tempSensor.tempInF = request.POST["tempInF"]
+        tempSensor.collectionTime = timezone.now()
+        tempSensor.isAverageValue = False
+        tempSensor.save()
+        doAverage(TemperatureSensor)
+    except Exception as e:
+        print("error bad post temp sensor" + str(e))
+    return HttpResponse("done")
 
 
 @csrf_exempt
@@ -203,7 +205,7 @@ def logSystemStatus(request):
 
         ss.save()
 
-        doAverage()
+        doAverage(SystemStats)
     except Exception as e:
         print("error bad post system status " + str(e))
     return HttpResponse("done")
