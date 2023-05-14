@@ -2,9 +2,9 @@ from django.db import models
 
 
 class TemperatureSensor(models.Model):
+    name = models.CharField(max_length=20)
     tempInF = models.FloatField()
     collectionTime = models.DateTimeField('date/time collected')
-
     isAverageValue = models.BooleanField()
 
 

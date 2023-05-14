@@ -96,56 +96,65 @@ def fillData(arrayOfFloats, maxTime, minTime):
 def status(request):
     # latest = timezone.now() - timezone.timedelta(minutes=1)
     # latest_stats = list(SystemStats.objects.order_by('-id'))[0]
-    latest_stats = SystemStats.objects.last()
-    latest_temps = TemperatureSensor.objects.last()
+    # latest_stats = SystemStats.objects.last()
+    latest_tempsA = TemperatureSensor.objects.order_by('-collectionTime').filter(name__exact="tempA")[0]
+    latest_tempsB = TemperatureSensor.objects.order_by('-collectionTime').filter(name__exact="tempB")[0]
+    tempA_single = "%.2f" % latest_tempsA.tempInF
+    tempB_single = "%.2f" % latest_tempsB.tempInF
 
-    currentPanelPower = "%.2f" % (latest_stats.panelCurrent * latest_stats.panelVoltage)
-    currentBatteryVoltage = "%.2f" % latest_stats.batteryVoltage
-    panelVoltage = "%.2f" % latest_stats.panelVoltage
-
-    currentLoad = "%.2f" % latest_stats.loadCurrent
-
-    caseTemp = "%.2f" % latest_stats.caseTemp
-    lastCollectionTime = latest_stats.collectionTime
-    weatherTemp = "%.2f" % latest_temps.tempInF
-
-    pannelPowerGrid = []
-    batteryVoltageGrid = []
-    tempGrid = []
+    #
+    # currentPanelPower = "%.2f" % (latest_stats.panelCurrent * latest_stats.panelVoltage)
+    # currentBatteryVoltage = "%.2f" % latest_stats.batteryVoltage
+    # panelVoltage = "%.2f" % latest_stats.panelVoltage
+    #
+    # currentLoad = "%.2f" % latest_stats.loadCurrent
+    #
+    # caseTemp = "%.2f" % latest_stats.caseTemp
+    # lastCollectionTime = latest_stats.collectionTime
+    # weatherTemp = "%.2f" % latest_temps.tempInF
+    #
+    # pannelPowerGrid = []
+    # batteryVoltageGrid = []
+    tempGridB = []
+    tempGridA = []
     for a in reversed(range(hoursToGraph)):
-        powertmp = SystemStats.objects.order_by('-collectionTime').filter(collectionTime__range=(
+        # powertmp = SystemStats.objects.order_by('-collectionTime').filter(collectionTime__range=(
+        #     timezone.now() - timezone.timedelta(hours=a + 1), timezone.now() - timezone.timedelta(hours=a)))
+        tempA = TemperatureSensor.objects.order_by('-collectionTime').filter(name__exact="tempA", collectionTime__range=(
             timezone.now() - timezone.timedelta(hours=a + 1), timezone.now() - timezone.timedelta(hours=a)))
-        temp = TemperatureSensor.objects.order_by('-collectionTime').filter(collectionTime__range=(
+        tempB = TemperatureSensor.objects.order_by('-collectionTime').filter(name__exact="tempB", collectionTime__range=(
             timezone.now() - timezone.timedelta(hours=a + 1), timezone.now() - timezone.timedelta(hours=a)))
-        if len(powertmp):
-            powerSum = sum([a.panelVoltage * a.panelCurrent for a in powertmp]) / len(powertmp)
-            batteryVoltageGrid.append(sum([a.batteryVoltage for a in powertmp]) / len(powertmp))
-            pannelPowerGrid.append(powerSum)
-        else:
-            pannelPowerGrid.append('')
-            batteryVoltageGrid.append('')
 
-        if len(temp):
-            tempGrid.append(sum([a.tempInF for a in temp]) / len(temp))
+        if len(tempA):
+            tempGridA.append(sum([a.tempInF for a in tempA]) / len(tempA))
         else:
-            tempGrid.append("")
+            tempGridA.append("")
+
+        if len(tempB):
+            tempGridB.append(sum([a.tempInF for a in tempB]) / len(tempB))
+        else:
+            tempGridB.append("")
 
     context = {
-        "panelVoltage": panelVoltage,
-        'currentPanelPower': currentPanelPower,
-        "currentBatteryVoltage": currentBatteryVoltage,
-        "currentLoad": currentLoad,
-
-        "caseTemp": caseTemp,
-        "weatherTemp": weatherTemp,
-        "lastCollectionTime": lastCollectionTime,
-
-        "panelPowerGraph": fillData(pannelPowerGrid, timezone.now() - timezone.timedelta(hours=24),
-                                    timezone.now()),
-        "batteryPowerGraph": fillData(batteryVoltageGrid, timezone.now() - timezone.timedelta(hours=24),
-                                      timezone.now()),
-        "tempGraph": fillData(tempGrid, timezone.now() - timezone.timedelta(hours=24),
+        # "panelVoltage": panelVoltage,
+        # 'currentPanelPower': currentPanelPower,
+        # "currentBatteryVoltage": currentBatteryVoltage,
+        # "currentLoad": currentLoad,
+        #
+        # "caseTemp": caseTemp,
+        # "weatherTemp": weatherTemp,
+        # "lastCollectionTime": lastCollectionTime,
+        #
+        # "panelPowerGraph": fillData(pannelPowerGrid, timezone.now() - timezone.timedelta(hours=24),
+        #                             timezone.now()),
+        # "batteryPowerGraph": fillData(batteryVoltageGrid, timezone.now() - timezone.timedelta(hours=24),
+        #                               timezone.now()),
+        "tempGraphA": fillData(tempGridA, timezone.now() - timezone.timedelta(hours=24),
                               timezone.now()),
+        "tempGraphB": fillData(tempGridB, timezone.now() - timezone.timedelta(hours=24),
+                               timezone.now()),
+        "tempA": tempA_single,
+        "tempB": tempB_single,
         "textWidth": str(85 / (2 * (hoursToGraph + 7)))
     }
 
@@ -176,6 +185,7 @@ def logTempData(request):
     tempSensor = TemperatureSensor()
     try:
         tempSensor.tempInF = request.POST["tempInF"]
+        tempSensor.name = request.POST["name"]
         tempSensor.collectionTime = timezone.now()
         tempSensor.isAverageValue = False
         tempSensor.save()

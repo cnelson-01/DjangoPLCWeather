@@ -33,24 +33,13 @@
 <body>
 {% localtime on %}
 <pre>
-Current stats:
-    Collection time: {{ lastCollectionTime }}
-    Weather temperature: {{ weatherTemp }}
+TempA current: {{ tempA }}
+TempB current: {{ tempB }}
 
-    Panel power: {{ currentPanelPower }}
-    Panel voltage: {{ panelVoltage }}
-    Battery voltage: {{ currentBatteryVoltage }}
-    Case temperature: {{ caseTemp }}
-    Load(A): {{ currentLoad }}
-
-Battery voltage:
-    {{ batteryPowerGraph }}
-
-Panel power:
-    {{ panelPowerGraph }}
-
-Temperature(f):
-    {{ tempGraph }}
+TemperatureA(f):
+    {{ tempGraphA }}
+TemperatureB(f):
+    {{ tempGraphB }}
 
 {% endlocaltime %}
 </pre>
